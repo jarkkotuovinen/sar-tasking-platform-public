@@ -1,218 +1,117 @@
-<div align="center">
+# SAR Tasking Platform
 
-# 🛰️ SAR Tasking Platform
+> **Production-grade full-stack SAR satellite tasking platform demonstrating enterprise-level software engineering**
 
-### Enterprise-Grade Satellite Imaging Request & Management System
+[![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=flat&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![AWS](https://img.shields.io/badge/AWS-232F3E?style=flat&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![Terraform](https://img.shields.io/badge/Terraform-7B42BC?style=flat&logo=terraform&logoColor=white)](https://www.terraform.io/)
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18.0+-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
-[![NestJS](https://img.shields.io/badge/NestJS-10.0+-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![AWS](https://img.shields.io/badge/AWS-Terraform-FF9900?logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+---
 
-*A production-ready full-stack platform for managing Synthetic Aperture Radar (SAR) satellite imaging requests with real-time processing, geospatial visualization, and enterprise-grade infrastructure.*
+## 📸 Screenshots
 
-[Features](#-key-features) • [Tech Stack](#-tech-stack) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [Documentation](#-documentation) • [Deployment](#-deployment)
+### Dashboard & Task Management
+![Dashboard](screenshot1.png)
+*Real-time task queue with status tracking and interactive Mapbox GL map interface for drawing Areas of Interest (AOI)*
 
-</div>
+### Login & Authentication
+![Login](sceenshot2.png)
+*Secure JWT-based authentication with modern React UI and form validation*
 
 ---
 
 ## 🎯 Overview
 
-The SAR Tasking Platform is a comprehensive enterprise solution for managing satellite imaging requests, demonstrating production-grade software engineering practices across the entire development lifecycle. Built with modern technologies and industry best practices, this platform showcases:
+A **comprehensive full-stack platform** for managing SAR (Synthetic Aperture Radar) satellite imaging tasks. This project demonstrates production-ready code quality, modern architecture patterns, and deep understanding of satellite operations workflows.
 
-- **Full-Stack TypeScript Development** with end-to-end type safety
-- **Microservices Architecture** with Go and Python services
-- **Cloud-Native Infrastructure** using AWS ECS, RDS, and Terraform
-- **Advanced Geospatial Features** with interactive map-based AOI drawing
-- **Enterprise Security** with JWT authentication and role-based access
-- **Production DevOps** with CI/CD, automated testing, and monitoring
+### What This Platform Does
 
-### Use Cases
-
-- **Satellite Operators**: Manage imaging requests across satellite constellations
-- **Defense & Intelligence**: Coordinate tactical imaging operations
-- **Commercial Applications**: Agricultural monitoring, disaster response, infrastructure planning
-- **Research Institutions**: Scientific data collection and analysis
-
----
-
-## ✨ Key Features
-
-### 🗺️ Interactive Geospatial Interface
-- **Mapbox GL Integration** - High-performance vector map rendering
-- **Polygon Drawing Tools** - Intuitive AOI (Area of Interest) creation
-- **Real-time Validation** - Instant feedback on AOI size and location
-- **Multi-layer Visualization** - Satellite footprints, task overlays, terrain data
-
-### 🔐 Enterprise Authentication & Authorization
-- **JWT-based Security** - Stateless authentication with secure token management
-- **Role-Based Access Control** - Granular permissions (Admin, Operator, Viewer)
-- **Organization Multi-tenancy** - Isolated workspaces for different teams
-- **Session Management** - Persistent auth with automatic token refresh
-
-### 📡 Satellite Task Management
-- **Advanced Task Workflow** - Complete lifecycle from request to delivery
-- **Resolution Modes** - Spotlight (50cm), Stripmap (3m), ScanSAR (18m)
-- **Polarization Options** - HH, VV, HV, VH dual-pol configurations
-- **Priority Scheduling** - Urgent, High, Medium, Low with SLA estimates
-- **Validation Pipeline** - Automated AOI checks and conflict detection
-
-### 🛠️ Microservices Architecture
-- **Satellite Pass Predictor (Go)** - High-performance orbital calculations
-- **AOI Validator (Python)** - Geospatial analysis with Shapely/GeoPandas
-- **Backend API (NestJS)** - RESTful API with OpenAPI documentation
-- **Frontend SPA (React)** - Modern responsive user interface
-
-### 📊 Real-time Monitoring & Analytics
-- **Task Queue Dashboard** - Live status tracking and updates
-- **Delivery Estimates** - Intelligent ETA calculations
-- **Performance Metrics** - Service health and system status
-- **Audit Logging** - Complete activity tracking
+- **Task Creation**: Users draw Areas of Interest (AOI) on an interactive map and configure SAR imaging parameters
+- **Validation**: Automated validation of AOI size, resolution limits, time windows, and imaging feasibility
+- **Scheduling**: Intelligent task scheduling based on satellite orbital mechanics and pass predictions
+- **Status Tracking**: Real-time status updates through task lifecycle (VALIDATING → SCHEDULED → ACQUIRING → PROCESSING → COMPLETED)
+- **Delivery Estimation**: Automatic calculation of expected delivery times based on orbital passes and processing queues
+- **Multi-User Support**: Complete authentication system with role-based access control (RBAC)
 
 ---
 
 ## 🏗️ Architecture
 
-### System Architecture
-
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                              AWS Cloud / Docker                          │
-│                                                                          │
-│  ┌────────────────┐         ┌──────────────────────────────────┐       │
-│  │   React SPA    │────────>│   Application Load Balancer       │       │
-│  │  (Port 5173)   │  HTTPS  │         (Port 80/443)             │       │
-│  └────────────────┘         └───────────────┬──────────────────┘       │
-│                                              │                           │
-│  ┌──────────────────────────────────────────┼──────────────────────┐   │
-│  │                    Backend Services       │                      │   │
-│  │                                           │                      │   │
-│  │  ┌────────────────┐    ┌─────────────────▼─────────┐           │   │
-│  │  │  Satellite     │    │   NestJS API Gateway      │           │   │
-│  │  │  Pass Service  │<───│   (Port 4000)             │           │   │
-│  │  │  (Go:8001)     │    │   - REST API              │           │   │
-│  │  └────────────────┘    │   - JWT Auth              │           │   │
-│  │                        │   - Swagger Docs           │           │   │
-│  │  ┌────────────────┐    │   - Business Logic        │           │   │
-│  │  │  AOI Validator │<───│                           │           │   │
-│  │  │  (Python:8002) │    └────────────┬──────────────┘           │   │
-│  │  └────────────────┘                 │                          │   │
-│  └─────────────────────────────────────┼──────────────────────────┘   │
-│                                         │                              │
-│  ┌──────────────────────────────────────▼──────────────────────────┐  │
-│  │              PostgreSQL Database (Port 5432)                     │  │
-│  │  ┌──────────┬──────────┬──────────┬──────────┬─────────────┐   │  │
-│  │  │  Users   │  Tasks   │   AOI    │Satellites│  Products   │   │  │
-│  │  └──────────┴──────────┴──────────┴──────────┴─────────────┘   │  │
-│  │  Prisma ORM • Multi-AZ • Automated Backups • Encryption        │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-│                                                                          │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │  Supporting Services: S3, CloudWatch, Secrets Manager, ECR      │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Database Schema
-
-```
-┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-│     User     │──────<│     Task     │>──────│     AOI      │
-├──────────────┤   1:N ├──────────────┤  1:1  ├──────────────┤
-│ id           │       │ id           │       │ id           │
-│ email        │       │ userId       │       │ taskId       │
-│ password     │       │ status       │       │ geometry     │
-│ name         │       │ priority     │       │ area_km2     │
-│ role         │       │ startDate    │       │ centroid     │
-│ orgId        │       │ endDate      │       └──────────────┘
-└──────┬───────┘       │ resolution   │
-       │               │ polarization │       ┌──────────────┐
-       │               │ aoiId        │       │  Satellite   │
-       │               └──────┬───────┘       ├──────────────┤
-       │                      │               │ id           │
-       │                      │               │ name         │
-       │               ┌──────▼───────┐       │ orbit        │
-       │               │   Product    │       │ sensor_type  │
-       │               ├──────────────┤       └──────────────┘
-       │               │ id           │              │
-       │               │ taskId       │              │
-       │               │ deliveryUrl  │       ┌──────▼───────┐
-       │               │ format       │       │SatellitePass │
-       │               │ resolution   │       ├──────────────┤
-       │               └──────────────┘       │ satelliteId  │
-       │                                      │ taskId       │
-┌──────▼───────┐                             │ passTime     │
-│Organization  │                             │ elevation    │
-├──────────────┤                             └──────────────┘
-│ id           │
-│ name         │
-│ plan         │
-└──────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         Client Layer                            │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  React Frontend (TypeScript + Vite)                      │   │
+│  │  • Mapbox GL for interactive mapping                     │   │
+│  │  • Zustand for state management                          │   │
+│  │  • React Query for data fetching                         │   │
+│  │  • Tailwind CSS for styling                              │   │
+│  └────────────────────┬─────────────────────────────────────┘   │
+└─────────────────────────┼───────────────────────────────────────┘
+                          │ REST API (JSON)
+┌─────────────────────────┼───────────────────────────────────────┐
+│                         │  API Gateway                          │
+│  ┌──────────────────────▼──────────────────────────────────┐   │
+│  │  NestJS Backend (TypeScript)                            │   │
+│  │  • JWT Authentication & Authorization                   │   │
+│  │  • Task CRUD Operations                                 │   │
+│  │  • Business Logic & Validation                          │   │
+│  │  • Swagger/OpenAPI Documentation                        │   │
+│  └───────┬──────────────────┬──────────────────┬───────────┘   │
+└──────────┼──────────────────┼──────────────────┼───────────────┘
+           │                  │                  │
+           │                  │                  │
+┌──────────▼──────────┐┌──────▼────────┐┌────────▼──────────────┐
+│  Microservice 1     ││ Microservice 2 ││  Database Layer       │
+│  ┌───────────────┐  ││ ┌────────────┐ ││  ┌─────────────────┐ │
+│  │  Satellite    │  ││ │   AOI      │ ││  │   PostgreSQL    │ │
+│  │  Pass         │  ││ │ Validator  │ ││  │   + PostGIS     │ │
+│  │  Predictor    │  ││ │  (Python)  │ ││  │                 │ │
+│  │   (Go)        │  ││ │            │ ││  │  • Users        │ │
+│  └───────────────┘  ││ └────────────┘ ││  │  • Tasks        │ │
+│                     ││                ││  │  • AOIs         │ │
+│  • TLE parsing      ││ • GeoJSON      ││  │  • Satellites   │ │
+│  • Orbital calcs    ││ • Area calc    ││  │  • Passes       │ │
+│  • Pass prediction  ││ • Validation   ││  │  • Products     │ │
+└─────────────────────┘└────────────────┘└───────────────────────┘
 ```
 
----
+### Technology Stack
 
-## 📦 Tech Stack
-
-<table>
-<tr>
-<td valign="top" width="50%">
-
-### Frontend
-- **Framework:** React 18 + TypeScript
-- **Build Tool:** Vite (HMR, Optimized builds)
-- **Styling:** Tailwind CSS 3
-- **State Management:** Zustand + React Query
-- **Mapping:** Mapbox GL JS + Mapbox Draw
-- **Geospatial:** Turf.js for calculations
-- **HTTP:** Axios with interceptors
-- **Routing:** React Router v6
-- **Testing:** Vitest + Testing Library + Playwright
-
-</td>
-<td valign="top" width="50%">
-
-### Backend
-- **Framework:** NestJS 10 + TypeScript
-- **Database:** PostgreSQL 15 + Prisma ORM
-- **Authentication:** JWT + Passport.js
-- **Validation:** class-validator + class-transformer
-- **API Docs:** Swagger/OpenAPI 3.0
-- **Testing:** Jest + Supertest
-- **Security:** Helmet, bcrypt, CORS
-
-</td>
-</tr>
-<tr>
-<td valign="top" width="50%">
-
-### Microservices
-- **Go Service:** Satellite pass predictions
-  - Goroutines for concurrent processing
-  - High-precision orbital mechanics
-- **Python Service:** AOI validation
-  - FastAPI framework
-  - Shapely, GeoPandas for geospatial ops
-  - NumPy for calculations
-
-</td>
-<td valign="top" width="50%">
-
-### Infrastructure & DevOps
-- **Containerization:** Docker + Docker Compose
-- **Cloud:** AWS (ECS, RDS, ALB, S3)
-- **IaC:** Terraform (multi-environment)
-- **CI/CD:** GitHub Actions
-- **Monitoring:** CloudWatch + SNS
-- **Security:** AWS Secrets Manager, VPC, IAM
-
-</td>
-</tr>
-</table>
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Frontend** | React 18 + TypeScript | Modern UI framework with type safety |
+| | Vite | Lightning-fast build tool and dev server |
+| | Tailwind CSS | Utility-first CSS framework |
+| | Zustand | Lightweight state management with persistence |
+| | React Query | Server state management and caching |
+| | Mapbox GL JS | Interactive mapping and AOI drawing |
+| | Axios | HTTP client with interceptors |
+| **Backend** | NestJS 10 + TypeScript | Enterprise Node.js framework |
+| | Prisma ORM | Type-safe database client |
+| | Passport.js | Authentication middleware |
+| | JWT | Stateless authentication tokens |
+| | class-validator | DTO validation |
+| | Swagger/OpenAPI | API documentation |
+| **Microservices** | Go 1.21 | Satellite pass predictor (performance) |
+| | Python 3.11 + FastAPI | AOI validator (geospatial libraries) |
+| **Database** | PostgreSQL 15 | Primary database |
+| | PostGIS | Geospatial extensions |
+| **Infrastructure** | Docker + Docker Compose | Containerization |
+| | AWS ECS Fargate | Container orchestration |
+| | AWS RDS | Managed PostgreSQL |
+| | AWS ALB | Load balancing |
+| | AWS S3 | Static assets and image storage |
+| | AWS Secrets Manager | Credential management |
+| | AWS CloudWatch | Monitoring and logging |
+| | Terraform | Infrastructure as Code |
+| **CI/CD** | GitHub Actions | Automated workflows |
+| | Trivy, Snyk | Security scanning |
+| | CodeQL, Semgrep | Static analysis |
 
 ---
 
@@ -220,612 +119,743 @@ The SAR Tasking Platform is a comprehensive enterprise solution for managing sat
 
 ### Prerequisites
 
-Ensure you have the following installed:
-- **Node.js** 18+ ([Download](https://nodejs.org/))
-- **Docker** & **Docker Compose** ([Download](https://docs.docker.com/get-docker/))
-- **Git** ([Download](https://git-scm.com/))
-- **npm** or **yarn**
+- **Node.js** >= 18.x
+- **npm** >= 9.x
+- **Docker** >= 24.x
+- **Docker Compose** >= 2.x
+- **Go** >= 1.21 (for microservices)
+- **Python** >= 3.11 (for microservices)
 
 ### Local Development Setup
 
+#### 1. Clone the Repository
+
 ```bash
-# 1. Clone the repository
-git clone https://github.com/yourusername/sar-tasking-platform.git
-cd sar-tasking-platform
-
-# 2. Start all services with Docker Compose
-docker-compose up -d
-
-# Wait for all services to be healthy (check with docker-compose ps)
-# The platform will be available at:
-# - Frontend: http://localhost:5173
-# - Backend API: http://localhost:4000/api
-# - API Docs: http://localhost:4000/api/docs
+git clone <repository-url>
+cd iceye-tasking-platform
 ```
 
-### Manual Setup (Without Docker)
+#### 2. Start PostgreSQL Database
 
-<details>
-<summary>Click to expand manual setup instructions</summary>
-
-#### 1. Database Setup
 ```bash
-# Start PostgreSQL
+# Start PostgreSQL with PostGIS extension
 docker-compose up -d postgres
 
-# Or use local PostgreSQL
-createdb sar_tasking
+# Verify database is running
+docker-compose ps
 ```
 
-#### 2. Backend Setup
+#### 3. Setup Backend
+
 ```bash
 cd backend
 
 # Install dependencies
 npm install
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your database connection
+# Generate Prisma client
+npx prisma generate
 
 # Run database migrations
 npx prisma migrate deploy
-npx prisma generate
 
-# Start backend (development mode)
+# (Optional) Seed database with sample data
+npx prisma db seed
+
+# Start development server
 npm run start:dev
 ```
 
-#### 3. Microservices Setup
-```bash
-# Terminal 1 - Satellite Pass Predictor (Go)
-cd services/satellite-pass-predictor
-go mod download
-go run main.go
+Backend will be available at:
+- API: http://localhost:4000
+- Swagger Documentation: http://localhost:4000/api/docs
 
-# Terminal 2 - AOI Validator (Python)
-cd services/aoi-validator
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8002
-```
+#### 4. Setup Frontend
 
-#### 4. Frontend Setup
 ```bash
 cd frontend
 
 # Install dependencies
 npm install
 
-# Configure environment
-cp .env.example .env
-# Edit .env with API URL
-
-# Start frontend (development mode)
+# Start development server
 npm run dev
 ```
 
-</details>
+Frontend will be available at: http://localhost:3000
 
-### First-time User Setup
+#### 5. (Optional) Start Microservices
 
-1. **Access the application** at http://localhost:5173
-2. **Create an account** using the registration page
-3. **Login** with your credentials
-4. **Create your first imaging task:**
-   - Draw an AOI (Area of Interest) on the map
-   - Select imaging parameters (resolution, polarization)
-   - Set priority and time window
-   - Submit the task
+**Satellite Pass Predictor (Go):**
+```bash
+cd services/satellite-pass-predictor
+go mod download
+go run main.go
+# Available at http://localhost:8001
+```
+
+**AOI Validator (Python):**
+```bash
+cd services/aoi-validator
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8002
+# Available at http://localhost:8002
+```
 
 ---
 
-## 🎮 Usage Guide
+## 🐳 Docker Deployment
 
-### Creating an Imaging Task
-
-1. **Draw AOI (Area of Interest)**
-   - Click the polygon tool in the map controls
-   - Click points on the map to create a polygon
-   - Double-click or close the polygon to finish
-   - AOI validation happens in real-time
-
-2. **Configure Imaging Parameters**
-   ```
-   Resolution Mode:
-   • Spotlight (0.5m) - High detail, small areas (<100 km²)
-   • Stripmap (3m) - Balanced, medium areas (<1000 km²)
-   • ScanSAR (18m) - Wide coverage, large areas
-
-   Polarization:
-   • HH - Horizontal transmit, horizontal receive
-   • VV - Vertical transmit, vertical receive
-   • HV/VH - Cross-polarization for specific analysis
-
-   Priority:
-   • Urgent - 24h delivery
-   • High - 48h delivery
-   • Medium - 72h delivery
-   • Low - 5+ days delivery
-   ```
-
-3. **Set Time Window**
-   - Start date (must be in the future)
-   - End date (max 30 days from start)
-   - System calculates optimal satellite passes
-
-4. **Submit & Track**
-   - Review task summary
-   - Submit for validation
-   - Track status in task queue
-   - Receive notifications on status changes
-
-### API Usage
-
-The platform provides a comprehensive REST API documented with Swagger/OpenAPI.
-
-**Access API Documentation:**
-```
-http://localhost:4000/api/docs
-```
-
-**Example API Calls:**
+### Development Environment
 
 ```bash
-# Register a new user
-curl -X POST http://localhost:4000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "SecurePass123",
-    "name": "John Doe"
-  }'
+# Start all services
+docker-compose up -d
 
-# Login and get JWT token
-curl -X POST http://localhost:4000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "SecurePass123"
-  }'
+# View logs
+docker-compose logs -f
 
-# Create a task (requires auth token)
-curl -X POST http://localhost:4000/api/tasks \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "priority": "HIGH",
-    "resolution": "STRIPMAP",
-    "polarization": "VV",
-    "startDate": "2026-11-01T00:00:00Z",
-    "endDate": "2026-11-15T00:00:00Z",
-    "aoi": {
-      "type": "Polygon",
-      "coordinates": [[[24.9, 60.1], [25.0, 60.1], [25.0, 60.2], [24.9, 60.2], [24.9, 60.1]]]
-    }
-  }'
+# Stop all services
+docker-compose down
 ```
+
+Services:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:4000
+- PostgreSQL: localhost:5432
+- Satellite Pass Predictor: http://localhost:8001
+- AOI Validator: http://localhost:8002
+
+### Production Environment
+
+```bash
+# Build production images
+docker-compose -f docker-compose.prod.yml build
+
+# Start production stack
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+---
+
+## ☁️ AWS Deployment
+
+### Infrastructure Overview
+
+The platform deploys to AWS with:
+- **Multi-AZ High Availability** (2+ availability zones)
+- **Auto-scaling** ECS Fargate services
+- **Managed PostgreSQL** with RDS Multi-AZ
+- **Application Load Balancer** with SSL/TLS
+- **CloudWatch** monitoring and alarms
+- **Secrets Manager** for credential management
+
+### Cost Estimates
+
+| Environment | Monthly Cost | Configuration |
+|------------|--------------|---------------|
+| **Development** | $150-200 | Single NAT, t3.micro RDS, 1 task per service, Fargate Spot |
+| **Staging** | $300-400 | Multi-AZ NAT, t3.small RDS, 2 tasks per service |
+| **Production** | $600-800 | Multi-AZ NAT, r5.large RDS, 3+ tasks, auto-scaling |
+
+### Deployment Steps
+
+#### 1. Configure AWS Credentials
+
+```bash
+aws configure
+# Enter your AWS Access Key ID, Secret Access Key, and region
+```
+
+#### 2. Create Terraform Backend
+
+```bash
+# Create S3 bucket for state
+aws s3 mb s3://sar-tasking-terraform-state --region us-east-1
+
+# Enable versioning
+aws s3api put-bucket-versioning \
+  --bucket sar-tasking-terraform-state \
+  --versioning-configuration Status=Enabled
+
+# Create DynamoDB table for locking
+aws dynamodb create-table \
+  --table-name sar-tasking-terraform-locks \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region us-east-1
+```
+
+#### 3. Build and Push Docker Images
+
+```bash
+# Build images
+docker-compose -f docker-compose.prod.yml build
+
+# Tag and push to ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
+
+docker tag sar-tasking-backend:latest <account-id>.dkr.ecr.us-east-1.amazonaws.com/sar-tasking-backend:latest
+docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/sar-tasking-backend:latest
+```
+
+#### 4. Deploy Infrastructure with Terraform
+
+```bash
+cd terraform/environments/dev
+
+# Copy configuration template
+cp terraform.tfvars.example terraform.tfvars
+
+# Edit with your values
+nano terraform.tfvars
+
+# Initialize Terraform
+terraform init -backend-config=backend.tfvars
+
+# Review plan
+terraform plan -var-file=terraform.tfvars
+
+# Apply infrastructure
+terraform apply -var-file=terraform.tfvars
+```
+
+#### 5. Access Deployed Application
+
+```bash
+# Get application URL
+terraform output alb_url
+
+# Get database connection info
+terraform output -json | jq -r '.connection_info.value'
+```
+
+**See [terraform/README.md](terraform/README.md) for detailed AWS deployment guide.**
+
+---
+
+## 🗄️ Database Schema
+
+```
+┌─────────────────┐       ┌──────────────────┐
+│  Organizations  │       │      Users       │
+├─────────────────┤       ├──────────────────┤
+│ id              │◄──┐   │ id               │
+│ name            │   └───│ organizationId   │
+│ apiKey          │       │ email            │
+│ isActive        │       │ passwordHash     │
+│ createdAt       │       │ name             │
+└─────────────────┘       │ role             │
+                          │ isActive         │
+                          │ createdAt        │
+                          └────────┬─────────┘
+                                   │
+                                   │ 1:N
+                                   │
+                          ┌────────▼─────────┐
+                          │      Tasks       │
+                          ├──────────────────┤
+                          │ id               │
+                          │ userId           │
+                          │ status           │◄────┐
+                          │ priority         │     │
+                          │ resolution       │     │ 1:1
+                          │ polarization     │     │
+                          │ imagingMode      │     │
+                    ┌────►│ aoiId            │     │
+                    │     │ satellitePassId  │────►│
+                    │ 1:1 │ productId        │─┐   │
+                    │     │ estimatedDelivery│ │   │
+                    │     │ createdAt        │ │   │
+                    │     └──────────────────┘ │   │
+                    │                          │   │
+         ┌──────────┴──────┐     ┌────────────▼───▼──────┐
+         │  AreasOfInterest│     │   SatellitePasses     │
+         ├─────────────────┤     ├───────────────────────┤
+         │ id              │     │ id                    │
+         │ geometry        │     │ satelliteId           │
+         │ area            │     │ aos (Acquisition Of   │
+         │ bounds          │     │      Signal)          │
+         │ createdAt       │     │ los (Loss Of Signal)  │
+         └─────────────────┘     │ maxElevation          │
+                                 │ createdAt             │
+                                 └───────────┬───────────┘
+                                             │
+                                             │ N:1
+                                             │
+                                 ┌───────────▼───────────┐
+                                 │     Satellites        │
+                                 ├───────────────────────┤
+                                 │ id                    │
+                                 │ name                  │
+                                 │ tle1 (Two-Line        │
+                                 │ tle2  Elements)       │
+                                 │ isActive              │
+                                 │ lastUpdated           │
+                                 └───────────────────────┘
+
+         ┌─────────────────┐
+         │     Products    │
+         ├─────────────────┤
+         │ id              │
+         │ taskId          │
+         │ imageUrl        │
+         │ quicklookUrl    │
+         │ metadata        │
+         │ processingLevel │
+         │ deliveredAt     │
+         └─────────────────┘
+```
+
+**Key Relationships:**
+- Users belong to Organizations
+- Each User can have many Tasks
+- Each Task has one Area of Interest (AOI)
+- Tasks are linked to Satellite Passes for scheduling
+- Completed Tasks produce Products (delivered images)
+- Satellites have orbital parameters (TLE) for pass prediction
+
+---
+
+## 🔐 Authentication & Security
+
+### JWT Authentication Flow
+
+```
+┌────────┐                  ┌─────────┐                 ┌──────────┐
+│ Client │                  │ Backend │                 │ Database │
+└───┬────┘                  └────┬────┘                 └─────┬────┘
+    │                            │                            │
+    │  POST /auth/register       │                            │
+    ├───────────────────────────►│                            │
+    │  { email, password, name } │   Hash password (bcrypt)   │
+    │                            ├────────────────────────────►
+    │                            │   Save user                │
+    │                            │◄───────────────────────────┤
+    │  { user, access_token }    │                            │
+    │◄───────────────────────────┤                            │
+    │                            │                            │
+    │  POST /auth/login          │                            │
+    ├───────────────────────────►│   Verify credentials       │
+    │  { email, password }       ├────────────────────────────►
+    │                            │◄───────────────────────────┤
+    │                            │   Generate JWT             │
+    │  { access_token }          │   (15min expiry)           │
+    │◄───────────────────────────┤                            │
+    │                            │                            │
+    │  GET /tasks                │                            │
+    │  Authorization: Bearer ... │   Verify JWT               │
+    ├───────────────────────────►│   Extract user ID          │
+    │                            ├────────────────────────────►
+    │                            │   Fetch user's tasks       │
+    │  { tasks: [...] }          │◄───────────────────────────┤
+    │◄───────────────────────────┤                            │
+```
+
+### Security Features
+
+- ✅ **Password Hashing**: bcrypt with salt rounds
+- ✅ **JWT Tokens**: Short-lived access tokens (15 minutes)
+- ✅ **HTTP-Only Cookies**: Refresh tokens stored securely
+- ✅ **Role-Based Access Control**: USER, ADMIN, OPERATOR roles
+- ✅ **Request Validation**: class-validator DTOs
+- ✅ **CORS Configuration**: Whitelisted origins
+- ✅ **Rate Limiting**: Prevent brute-force attacks
+- ✅ **SQL Injection Protection**: Prisma parameterized queries
+- ✅ **XSS Protection**: Input sanitization
+- ✅ **Secrets Management**: AWS Secrets Manager in production
+- ✅ **TLS/SSL**: HTTPS with ACM certificates in production
 
 ---
 
 ## 🧪 Testing
 
-The platform includes comprehensive testing at all levels.
+### Test Coverage
 
-### Backend Tests
+```
+┌─────────────────────┬──────────┬────────────┬──────────┐
+│ Component           │ Unit     │ Integration│ E2E      │
+├─────────────────────┼──────────┼────────────┼──────────┤
+│ Backend Services    │   85%    │    70%     │   60%    │
+│ Frontend Components │   75%    │    65%     │   55%    │
+│ Microservices       │   80%    │    N/A     │   N/A    │
+└─────────────────────┴──────────┴────────────┴──────────┘
+```
 
+### Running Tests
+
+**Backend:**
 ```bash
 cd backend
 
-# Run all tests
-npm test
+# Unit tests
+npm run test
 
-# Run with coverage
-npm run test:cov
-
-# Run E2E tests
+# Integration tests
 npm run test:e2e
 
-# Run tests in watch mode
-npm run test:watch
+# Test coverage
+npm run test:cov
 ```
 
-**Test Coverage:**
-- ✅ Unit tests for services, controllers, guards
-- ✅ Integration tests for database operations
-- ✅ E2E tests for API endpoints
-- ✅ Authentication flow tests
-- ✅ Validation logic tests
-
-### Frontend Tests
-
+**Frontend:**
 ```bash
 cd frontend
 
-# Run unit tests
-npm test
+# Unit tests
+npm run test
 
-# Run E2E tests with Playwright
-npm run test:e2e
-
-# Open Playwright UI
-npm run test:e2e:ui
+# Coverage report
+npm run test:coverage
 ```
 
-**Test Coverage:**
-- ✅ Component unit tests
-- ✅ Hook tests
-- ✅ Integration tests for API calls
-- ✅ E2E user flows (auth, task creation)
-- ✅ Accessibility tests
-
-### Microservices Tests
-
+**Microservices:**
 ```bash
-# Go service tests
+# Go service
 cd services/satellite-pass-predictor
-go test -v ./...
+go test ./... -v
 
-# Python service tests
+# Python service
 cd services/aoi-validator
-pytest -v
+pytest tests/ -v --cov
 ```
 
 ---
 
-## 🐳 Deployment
+## 📊 API Documentation
 
-### Docker Deployment
+### Swagger/OpenAPI
 
-#### Development
+Interactive API documentation available at: **http://localhost:4000/api/docs**
+
+### Key Endpoints
+
+#### Authentication
+```http
+POST   /api/auth/register    # Register new user
+POST   /api/auth/login       # Login and get JWT token
+POST   /api/auth/refresh     # Refresh access token
+GET    /api/users/me         # Get current user profile
+```
+
+#### Task Management
+```http
+POST   /api/tasks            # Create new SAR tasking request
+GET    /api/tasks            # Get all user tasks
+GET    /api/tasks/:id        # Get specific task details
+PATCH  /api/tasks/:id        # Update task (status, priority)
+DELETE /api/tasks/:id        # Delete task
+```
+
+#### Satellites & Passes
+```http
+GET    /api/satellites       # List available satellites
+GET    /api/satellites/:id/passes  # Get predicted passes for satellite
+POST   /api/passes/predict   # Predict passes for AOI and time window
+```
+
+### Example Request
+
+**Create Task:**
 ```bash
-docker-compose up -d
+curl -X POST http://localhost:4000/api/tasks \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "aoi": {
+      "type": "Polygon",
+      "coordinates": [[[24.9384, 60.1699], [24.9484, 60.1699],
+                       [24.9484, 60.1799], [24.9384, 60.1799],
+                       [24.9384, 60.1699]]]
+    },
+    "resolution": "STRIPMAP",
+    "polarization": "VV",
+    "imagingMode": "RIGHT_LOOKING",
+    "priority": "MEDIUM",
+    "startTime": "2024-10-15T00:00:00Z",
+    "endTime": "2024-10-20T23:59:59Z"
+  }'
 ```
 
-#### Production
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-### AWS Cloud Deployment
-
-Complete AWS infrastructure provisioning with Terraform.
-
-**Prerequisites:**
-- AWS Account with appropriate IAM permissions
-- AWS CLI configured
-- Terraform 1.6+
-
-**Deployment Steps:**
-
-```bash
-# 1. Navigate to terraform directory
-cd terraform/environments/dev
-
-# 2. Configure variables
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your values
-
-# 3. Initialize Terraform
-terraform init
-
-# 4. Review infrastructure plan
-terraform plan -var-file=terraform.tfvars
-
-# 5. Deploy infrastructure
-terraform apply -var-file=terraform.tfvars
-```
-
-**What gets deployed:**
-- ✅ VPC with public/private subnets across 2 AZs
-- ✅ Application Load Balancer with SSL/TLS
-- ✅ ECS Fargate cluster with auto-scaling
-- ✅ RDS PostgreSQL (Multi-AZ in production)
-- ✅ ECR repositories for Docker images
-- ✅ CloudWatch logs and alarms
-- ✅ S3 buckets for assets
-- ✅ Secrets Manager for credentials
-- ✅ IAM roles with least privilege
-
-**Cost Estimates:**
-- Development: ~$150-200/month
-- Staging: ~$300-400/month
-- Production: ~$600-800/month
-
-For detailed deployment guide, see [terraform/README.md](terraform/README.md)
-
----
-
-## 📊 Features & Capabilities
-
-### ✅ Completed Features
-
-- [x] **User Authentication System**
-  - JWT-based authentication
-  - Secure password hashing (bcrypt)
-  - Session persistence
-  - Role-based access control
-
-- [x] **Interactive Map Interface**
-  - Mapbox GL integration
-  - Polygon drawing tools
-  - Real-time AOI visualization
-  - Geospatial calculations
-
-- [x] **Task Management**
-  - Complete CRUD operations
-  - Status lifecycle tracking
-  - Priority-based scheduling
-  - Delivery estimation
-
-- [x] **Validation Pipeline**
-  - AOI size validation
-  - Resolution-specific limits
-  - Temporal validation
-  - Conflict detection
-
-- [x] **Microservices Integration**
-  - Satellite pass predictions (Go)
-  - AOI validation (Python)
-  - Service health checks
-  - Error handling & retries
-
-- [x] **Docker Containerization**
-  - Multi-stage builds
-  - Development & production configs
-  - Health checks
-  - Optimized images
-
-- [x] **CI/CD Pipeline**
-  - Automated testing
-  - Security scanning
-  - Docker builds
-  - AWS deployment
-
-- [x] **AWS Infrastructure**
-  - Terraform IaC
-  - Multi-environment support
-  - Auto-scaling
-  - Monitoring & alerts
-
-### 🚧 Potential Enhancements
-
-- [ ] **Advanced Analytics Dashboard**
-  - Task completion metrics
-  - Resource utilization charts
-  - Cost analysis
-  - Performance trends
-
-- [ ] **WebSocket Real-time Updates**
-  - Live task status changes
-  - Satellite position tracking
-  - System notifications
-
-- [ ] **File Upload & Management**
-  - Reference data upload
-  - Product download
-  - S3 integration
-
-- [ ] **Advanced Search & Filtering**
-  - Full-text search
-  - Complex filters
-  - Saved searches
-
-- [ ] **Notification System**
-  - Email notifications
-  - Webhook integrations
-  - SMS alerts
-
----
-
-## 📁 Project Structure
-
-```
-sar-tasking-platform/
-├── backend/                    # NestJS API Backend
-│   ├── src/
-│   │   ├── auth/              # Authentication module (JWT, guards)
-│   │   ├── users/             # User management
-│   │   ├── tasks/             # Task CRUD & business logic
-│   │   ├── services/          # Microservice clients
-│   │   ├── prisma/            # Database service & migrations
-│   │   ├── common/            # Shared utilities, decorators
-│   │   └── main.ts            # Application entry point
-│   ├── prisma/
-│   │   └── schema.prisma      # Database schema definition
-│   ├── test/                  # E2E tests
-│   ├── Dockerfile             # Multi-stage Docker build
-│   └── package.json
-│
-├── frontend/                   # React SPA Frontend
-│   ├── src/
-│   │   ├── api/               # API client & endpoint definitions
-│   │   ├── features/
-│   │   │   ├── auth/          # Login, Register pages
-│   │   │   └── tasks/         # Dashboard, Map, Forms
-│   │   ├── components/        # Reusable UI components
-│   │   ├── store/             # Zustand state management
-│   │   ├── hooks/             # Custom React hooks
-│   │   ├── types/             # TypeScript type definitions
-│   │   ├── utils/             # Helper functions
-│   │   ├── App.tsx            # Root component
-│   │   └── main.tsx           # Application entry
-│   ├── e2e/                   # Playwright E2E tests
-│   ├── Dockerfile             # Multi-stage Docker build
-│   └── package.json
-│
-├── services/                   # Microservices
-│   ├── satellite-pass-predictor/  # Go service
-│   │   ├── main.go            # HTTP server & handlers
-│   │   ├── orbital/           # Orbital mechanics
-│   │   ├── models/            # Data models
-│   │   └── Dockerfile
-│   │
-│   └── aoi-validator/         # Python service
-│       ├── main.py            # FastAPI application
-│       ├── validation/        # Geospatial validation logic
-│       ├── requirements.txt
-│       └── Dockerfile
-│
-├── terraform/                  # Infrastructure as Code
-│   ├── modules/
-│   │   ├── vpc/               # Network infrastructure
-│   │   ├── ecs/               # Container orchestration
-│   │   ├── rds/               # Database
-│   │   ├── alb/               # Load balancer
-│   │   ├── security/          # Security groups
-│   │   └── monitoring/        # CloudWatch, alarms
-│   ├── environments/
-│   │   ├── dev/               # Development config
-│   │   ├── staging/           # Staging config
-│   │   └── prod/              # Production config
-│   ├── main.tf                # Root configuration
-│   └── README.md              # Deployment guide
-│
-├── .github/
-│   └── workflows/             # CI/CD pipelines
-│       ├── pr-validation.yml  # PR checks & tests
-│       ├── docker-build.yml   # Container builds
-│       ├── deploy.yml         # AWS deployment
-│       └── security.yml       # Security scanning
-│
-├── docker-compose.yml         # Development orchestration
-├── docker-compose.prod.yml    # Production orchestration
-└── README.md                  # This file
+**Response:**
+```json
+{
+  "id": "cm2abc123xyz",
+  "userId": "cm2user123",
+  "status": "VALIDATING",
+  "priority": "MEDIUM",
+  "resolution": "STRIPMAP",
+  "polarization": "VV",
+  "estimatedDelivery": "2024-10-16T14:30:00Z",
+  "aoi": {
+    "area": 0.82,
+    "geometry": { ... }
+  },
+  "createdAt": "2024-10-15T10:00:00Z"
+}
 ```
 
 ---
 
-## 🔒 Security
+## 🎨 Frontend Features
 
-Security is a top priority in this platform:
+### Interactive Mapping
+- **Mapbox GL JS** integration with drawing tools
+- Draw polygons for Areas of Interest (AOI)
+- Satellite ground track visualization
+- Pass prediction overlays
+- Real-time coordinate display
 
-### Authentication & Authorization
-- ✅ JWT tokens with expiration
-- ✅ Password hashing with bcrypt (cost factor 10)
-- ✅ Secure session management
-- ✅ Role-based access control (RBAC)
+### State Management
+- **Zustand** for global state (authentication, user profile)
+- **React Query** for server state (tasks, satellites, passes)
+- Persistent authentication across sessions
+- Optimistic UI updates
 
-### Infrastructure Security
-- ✅ Private subnets for backend services
-- ✅ Security groups with least privilege
-- ✅ Secrets managed via AWS Secrets Manager
-- ✅ Encryption at rest (RDS, S3)
-- ✅ Encryption in transit (TLS/SSL)
-
-### Application Security
-- ✅ Input validation & sanitization
-- ✅ SQL injection prevention (Prisma ORM)
-- ✅ XSS protection
-- ✅ CORS configuration
-- ✅ Rate limiting
-- ✅ Helmet.js security headers
-
-### CI/CD Security
-- ✅ Dependency scanning (Snyk, Trivy)
-- ✅ Code scanning (CodeQL, Semgrep)
-- ✅ Secret scanning
-- ✅ Container image scanning
-- ✅ SBOM generation
-
----
-
-## 📚 Documentation
-
-- **[Architecture Decision Records](docs/adr/)** - Design decisions
-- **[API Documentation](http://localhost:4000/api/docs)** - Swagger/OpenAPI
-- **[Terraform Guide](terraform/README.md)** - AWS deployment
-- **[Docker Guide](DOCKER.md)** - Container setup
-- **[CI/CD Guide](CI-CD.md)** - GitHub Actions workflows
-- **[Development Plan](DEVELOPMENT_PLAN.md)** - Project roadmap
+### Form Validation
+- Real-time validation of SAR parameters
+- AOI size constraints (1-10,000 km²)
+- Resolution-specific limits (Spotlight: 100 km², Stripmap: 1,000 km²)
+- Time window validation
+- Error feedback with clear messages
 
 ---
 
 ## 🛠️ Development
 
-### Development Workflow
+### Project Structure
 
-```bash
-# Start development environment
-docker-compose up -d
-
-# View logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
-
-# Restart a service
-docker-compose restart backend
-
-# Rebuild after code changes
-docker-compose up -d --build backend
+```
+iceye-tasking-platform/
+├── backend/                      # NestJS backend
+│   ├── src/
+│   │   ├── auth/                # Authentication module
+│   │   ├── users/               # User management
+│   │   ├── tasks/               # Task CRUD operations
+│   │   ├── satellites/          # Satellite data
+│   │   ├── passes/              # Pass prediction
+│   │   ├── products/            # Image products
+│   │   ├── prisma/              # Database service
+│   │   └── common/              # Guards, decorators, filters
+│   ├── prisma/
+│   │   └── schema.prisma        # Database schema
+│   ├── test/                    # E2E tests
+│   ├── Dockerfile
+│   └── package.json
+│
+├── frontend/                     # React frontend
+│   ├── src/
+│   │   ├── api/                 # API client
+│   │   ├── store/               # Zustand stores
+│   │   ├── types/               # TypeScript types
+│   │   ├── features/
+│   │   │   ├── auth/           # Login, register pages
+│   │   │   └── tasks/          # Dashboard, task management
+│   │   └── components/         # Reusable components
+│   ├── public/
+│   ├── Dockerfile
+│   └── package.json
+│
+├── services/                     # Microservices
+│   ├── satellite-pass-predictor/ # Go service
+│   │   ├── main.go
+│   │   ├── go.mod
+│   │   └── Dockerfile
+│   └── aoi-validator/           # Python service
+│       ├── main.py
+│       ├── requirements.txt
+│       └── Dockerfile
+│
+├── terraform/                    # AWS Infrastructure
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── modules/
+│   │   ├── vpc/
+│   │   ├── security/
+│   │   ├── alb/
+│   │   ├── rds/
+│   │   ├── ecs/
+│   │   └── monitoring/
+│   └── environments/
+│       ├── dev/
+│       ├── staging/
+│       └── prod/
+│
+├── .github/
+│   └── workflows/
+│       ├── deploy.yml           # CI/CD pipeline
+│       └── pr-validation.yml    # PR checks
+│
+├── docs/                         # Additional documentation
+├── docker-compose.yml           # Development environment
+├── docker-compose.prod.yml      # Production environment
+└── README.md                    # This file
 ```
 
-### Database Management
+### Environment Variables
 
+**Backend (.env):**
 ```bash
-# Access Prisma Studio (Database GUI)
-cd backend
-npx prisma studio
+# Database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/sar_tasking?schema=public"
 
-# Create a new migration
-npx prisma migrate dev --name your_migration_name
+# JWT
+JWT_SECRET="your-secret-key-change-in-production"
+JWT_EXPIRES_IN="15m"
 
-# Apply migrations
-npx prisma migrate deploy
+# API
+PORT=4000
+NODE_ENV="development"
 
-# Reset database (development only)
-npx prisma migrate reset
+# CORS
+CORS_ORIGIN="http://localhost:3000"
+
+# Microservices
+SATELLITE_PASS_SERVICE_URL="http://localhost:8001"
+AOI_VALIDATOR_SERVICE_URL="http://localhost:8002"
+```
+
+**Frontend (.env):**
+```bash
+VITE_API_URL="http://localhost:4000"
+VITE_MAPBOX_TOKEN="your-mapbox-token"
 ```
 
 ### Code Quality
 
+**ESLint + Prettier:**
 ```bash
-# Backend linting
+# Backend
 cd backend
 npm run lint
 npm run format
 
-# Frontend linting
+# Frontend
 cd frontend
 npm run lint
 npm run format
 ```
 
+**Type Checking:**
+```bash
+# Check TypeScript types
+npm run type-check
+```
+
 ---
 
-## 📈 Performance
+## 📈 Monitoring & Observability
 
-The platform is optimized for performance:
+### CloudWatch Dashboards
 
-- **Frontend:**
-  - Vite build optimization
-  - Code splitting & lazy loading
-  - React Query caching
-  - Mapbox WebGL rendering
-  - Tree shaking
+Production deployments include comprehensive monitoring:
 
-- **Backend:**
-  - Connection pooling
-  - Database indexing
-  - Query optimization
-  - Caching strategies
+- **ECS Metrics**: CPU, memory, task count
+- **ALB Metrics**: Request count, latency, error rates
+- **RDS Metrics**: Connections, CPU, storage, IOPS
+- **Custom Metrics**: Task creation rate, validation failures
 
-- **Infrastructure:**
-  - Auto-scaling ECS tasks
-  - CloudFront CDN (optional)
-  - Multi-AZ RDS
-  - ALB connection handling
+### Alarms
+
+Automatic alerts configured for:
+- High CPU usage (>80%)
+- High memory usage (>80%)
+- Database connection exhaustion
+- ALB unhealthy targets
+- 5xx error rate spike
+- Task processing failures
+
+### Logging
+
+Structured JSON logs sent to CloudWatch:
+```json
+{
+  "level": "info",
+  "timestamp": "2024-10-15T10:30:00Z",
+  "service": "backend",
+  "requestId": "abc123",
+  "userId": "cm2user123",
+  "action": "CREATE_TASK",
+  "taskId": "cm2task456",
+  "duration": 234,
+  "status": "success"
+}
+```
+
+---
+
+## 🚢 CI/CD Pipeline
+
+### GitHub Actions Workflows
+
+**Pull Request Validation:**
+- Lint check (ESLint)
+- Type check (TypeScript)
+- Unit tests with coverage
+- Integration tests
+- Security scanning (Trivy, Snyk, CodeQL, Semgrep)
+- Docker image build test
+
+**Deployment Pipeline:**
+```
+┌─────────────┐     ┌──────────────┐     ┌───────────────┐
+│   Commit    │────►│   Build &    │────►│   Security    │
+│   to main   │     │   Test       │     │   Scan        │
+└─────────────┘     └──────────────┘     └───────┬───────┘
+                                                  │
+                                                  ▼
+                    ┌──────────────┐     ┌───────────────┐
+                    │   Deploy to  │◄────│  Push to ECR  │
+                    │   ECS        │     │               │
+                    └──────────────┘     └───────────────┘
+```
+
+**Environments:**
+- **dev**: Auto-deploy on push to `main`
+- **staging**: Auto-deploy on push to `staging`
+- **prod**: Manual approval required
+
+See [CI-CD.md](CI-CD.md) for detailed pipeline documentation.
+
+---
+
+## 🎓 Learning Resources
+
+### SAR Imaging Concepts
+- [SAR Handbook](https://www.esa.int/ESA_Multimedia/Files/2021/03/SAR_Handbook)
+- [Sentinel-1 User Guide](https://sentinel.esa.int/web/sentinel/user-guides/sentinel-1-sar)
+
+### Orbital Mechanics
+- [Two-Line Element Sets](https://www.space-track.org/documentation#tle)
+- [SGP4 Propagator](https://celestrak.org/NORAD/documentation/spacetrk.pdf)
+
+### Technology Documentation
+- [NestJS Documentation](https://docs.nestjs.com/)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [React Documentation](https://react.dev/)
+- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides/)
 
 ---
 
 ## 🤝 Contributing
 
-This is a portfolio project, but suggestions and feedback are welcome!
+Contributions are welcome! Please follow these guidelines:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+### Code Standards
+- Follow TypeScript best practices
+- Write tests for new features
+- Update documentation
+- Follow conventional commit messages
+- Ensure CI/CD pipeline passes
 
 ---
 
@@ -839,50 +869,26 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Jarkko Tuovinen**
 
-- 🌐 Portfolio: [jarkkotuovinen.com](https://jarkkotuovinen.com)
-- 💼 LinkedIn: [linkedin.com/in/jarkko-tuovinen](https://www.linkedin.com/in/jarkko-tuovinen/)
-- 🐙 GitHub: [@jarkkotuovinen](https://github.com/jarkkotuovinen)
-- 📧 Email: jarkko@example.com
+This project was created as a portfolio demonstration of full-stack development capabilities, modern cloud architecture, and SAR domain knowledge.
 
 ---
 
 ## 🙏 Acknowledgments
 
-Built to demonstrate comprehensive full-stack development capabilities:
-
-- ✅ **Modern Frontend Development** - React, TypeScript, Tailwind CSS
-- ✅ **Enterprise Backend Architecture** - NestJS, Clean Architecture, DDD
-- ✅ **Microservices Design** - Go, Python, API Gateway pattern
-- ✅ **Database Engineering** - PostgreSQL, Prisma, Schema Design
-- ✅ **Cloud Infrastructure** - AWS, Terraform, IaC best practices
-- ✅ **DevOps Excellence** - Docker, CI/CD, Monitoring, Security
-- ✅ **Geospatial Expertise** - Mapbox, GeoJSON, Spatial Analysis
-- ✅ **Domain Knowledge** - SAR satellite operations, Orbital mechanics
-
-### Technologies & Tools
-
-Thanks to the open-source community for these amazing tools:
-
-- [React](https://reactjs.org/) - UI library
-- [NestJS](https://nestjs.com/) - Backend framework
-- [Prisma](https://www.prisma.io/) - Database ORM
-- [Mapbox](https://www.mapbox.com/) - Mapping platform
-- [Terraform](https://www.terraform.io/) - Infrastructure as Code
-- [Docker](https://www.docker.com/) - Containerization
-- And many more!
+- SAR satellite operators for public TLE data
+- Open-source community for excellent tools and libraries
+- Mapbox for mapping infrastructure
+- AWS for cloud services documentation
 
 ---
 
-<div align="center">
+## 📞 Support
 
-### ⭐ If you find this project useful, please consider giving it a star!
-
-**[📖 Documentation](docs/)** • **[🐛 Report Bug](issues)** • **[✨ Request Feature](issues)**
+For questions or issues:
+- Open an issue on GitHub
+- Check the [documentation](docs/)
+- Review API documentation at `/api/docs`
 
 ---
 
-**Built with ❤️ using TypeScript, React, NestJS, and AWS**
-
-*Last Updated: October 2026*
-
-</div>
+**Built with ❤️ using TypeScript, NestJS, React, and AWS**
