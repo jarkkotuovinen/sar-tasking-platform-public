@@ -1,0 +1,59 @@
+# Development Environment Configuration
+
+# General
+environment  = "dev"
+project_name = "sar-tasking"
+aws_region   = "us-east-1"
+owner        = "DevOps Team"
+cost_center  = "Engineering"
+
+# Network
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+az_count             = 2
+
+# Cost Optimization for Dev
+single_nat_gateway = true    # Use single NAT Gateway to save costs
+enable_nat_gateway = true
+
+# Database
+database_name       = "sar_tasking"
+database_username   = "postgres"
+rds_instance_class  = "db.t3.micro"
+rds_allocated_storage = 20
+rds_max_allocated_storage = 50
+rds_multi_az = false          # Single AZ for dev
+rds_backup_retention_period = 3
+rds_performance_insights_enabled = false
+
+# Container Images (update with your ECR URLs)
+backend_image        = "123456789012.dkr.ecr.us-east-1.amazonaws.com/sar-tasking-dev-backend:latest"
+frontend_image       = "123456789012.dkr.ecr.us-east-1.amazonaws.com/sar-tasking-dev-frontend:latest"
+satellite_pass_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/sar-tasking-dev-satellite-pass:latest"
+aoi_validator_image  = "123456789012.dkr.ecr.us-east-1.amazonaws.com/sar-tasking-dev-aoi-validator:latest"
+
+# ECS Configuration
+backend_cpu            = 512
+backend_memory         = 1024
+backend_desired_count  = 1
+
+frontend_cpu           = 256
+frontend_memory        = 512
+frontend_desired_count = 1
+
+# Auto-scaling
+enable_autoscaling = false    # Disabled for dev
+min_capacity       = 1
+max_capacity       = 3
+
+# Security
+jwt_secret = "dev-jwt-secret-change-this"  # CHANGE THIS!
+certificate_arn = ""  # Leave empty for HTTP-only in dev
+
+# Monitoring
+alarm_email        = "devops@example.com"
+log_retention_days = 7
+
+# Cost Optimization
+enable_spot_instances = true  # Use Fargate Spot in dev

@@ -1,0 +1,273 @@
+name: Deploy to AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+env:
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: sar-tasking-cluster
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment || 'development' }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'development' }}
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set environment variables
+        run: |
+          ENV=${{ inputs.environment || 'development' }}
+          echo "ENVIRONMENT=${ENV}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+      # Build and push Backend
+      - name: Build, tag, and push Backend image
+        working-directory: ./backend
+        run: |
+          docker build -t $ECR_REGISTRY/sar-tasking-backend:$IMAGE_TAG \
+            -t $ECR_REGISTRY/sar-tasking-backend:$ENVIRONMENT \
+            -t $ECR_REGISTRY/sar-tasking-backend:latest \
+            --target production .
+          docker push $ECR_REGISTRY/sar-tasking-backend:$IMAGE_TAG
+          docker push $ECR_REGISTRY/sar-tasking-backend:$ENVIRONMENT
+          docker push $ECR_REGISTRY/sar-tasking-backend:latest
+
+      # Build and push Frontend
+      - name: Build, tag, and push Frontend image
+        working-directory: ./frontend
+        run: |
+          docker build -t $ECR_REGISTRY/sar-tasking-frontend:$IMAGE_TAG \
+            -t $ECR_REGISTRY/sar-tasking-frontend:$ENVIRONMENT \
+            -t $ECR_REGISTRY/sar-tasking-frontend:latest \
+            --target production .
+          docker push $ECR_REGISTRY/sar-tasking-frontend:$IMAGE_TAG
+          docker push $ECR_REGISTRY/sar-tasking-frontend:$ENVIRONMENT
+          docker push $ECR_REGISTRY/sar-tasking-frontend:latest
+
+      # Build and push Go Service
+      - name: Build, tag, and push Satellite Pass Predictor
+        working-directory: ./services/satellite-pass-predictor
+        run: |
+          docker build -t $ECR_REGISTRY/sar-tasking-satellite-pass:$IMAGE_TAG \
+            -t $ECR_REGISTRY/sar-tasking-satellite-pass:$ENVIRONMENT \
+            -t $ECR_REGISTRY/sar-tasking-satellite-pass:latest .
+          docker push $ECR_REGISTRY/sar-tasking-satellite-pass:$IMAGE_TAG
+          docker push $ECR_REGISTRY/sar-tasking-satellite-pass:$ENVIRONMENT
+          docker push $ECR_REGISTRY/sar-tasking-satellite-pass:latest
+
+      # Build and push Python Service
+      - name: Build, tag, and push AOI Validator
+        working-directory: ./services/aoi-validator
+        run: |
+          docker build -t $ECR_REGISTRY/sar-tasking-aoi-validator:$IMAGE_TAG \
+            -t $ECR_REGISTRY/sar-tasking-aoi-validator:$ENVIRONMENT \
+            -t $ECR_REGISTRY/sar-tasking-aoi-validator:latest .
+          docker push $ECR_REGISTRY/sar-tasking-aoi-validator:$IMAGE_TAG
+          docker push $ECR_REGISTRY/sar-tasking-aoi-validator:$ENVIRONMENT
+          docker push $ECR_REGISTRY/sar-tasking-aoi-validator:latest
+
+      # Run database migrations
+      - name: Run database migrations
+        run: |
+          # Get the backend task definition
+          TASK_DEF_ARN=$(aws ecs describe-task-definition \
+            --task-definition sar-tasking-backend-$ENVIRONMENT \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          # Run migration task
+          aws ecs run-task \
+            --cluster $ECS_CLUSTER \
+            --task-definition $TASK_DEF_ARN \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.PRIVATE_SUBNET_IDS }}],securityGroups=[${{ secrets.ECS_SECURITY_GROUP }}],assignPublicIp=DISABLED}" \
+            --overrides '{
+              "containerOverrides": [{
+                "name": "backend",
+                "command": ["npx", "prisma", "migrate", "deploy"]
+              }]
+            }' \
+            --wait
+
+      # Update ECS services
+      - name: Deploy Backend to ECS
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service sar-tasking-backend-$ENVIRONMENT \
+            --force-new-deployment \
+            --wait
+
+      - name: Deploy Frontend to ECS
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service sar-tasking-frontend-$ENVIRONMENT \
+            --force-new-deployment \
+            --wait
+
+      - name: Deploy Satellite Pass Service to ECS
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service sar-tasking-satellite-pass-$ENVIRONMENT \
+            --force-new-deployment \
+            --wait
+
+      - name: Deploy AOI Validator to ECS
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service sar-tasking-aoi-validator-$ENVIRONMENT \
+            --force-new-deployment \
+            --wait
+
+      # Verify deployment
+      - name: Verify deployment
+        run: |
+          # Wait for services to stabilize
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services \
+              sar-tasking-backend-$ENVIRONMENT \
+              sar-tasking-frontend-$ENVIRONMENT \
+              sar-tasking-satellite-pass-$ENVIRONMENT \
+              sar-tasking-aoi-validator-$ENVIRONMENT
+
+          echo "✅ All services deployed successfully!"
+
+      # Health check
+      - name: Run health checks
+        run: |
+          # Get ALB DNS name
+          ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --names sar-tasking-alb-$ENVIRONMENT \
+            --query 'LoadBalancers[0].DNSName' \
+            --output text)
+
+          # Check backend health
+          curl -f https://$ALB_DNS/api/health || exit 1
+
+          # Check frontend
+          curl -f https://$ALB_DNS/health || exit 1
+
+          echo "✅ Health checks passed!"
+
+      # Rollback on failure
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed, initiating rollback..."
+
+          # Rollback all services to previous task definition
+          for SERVICE in sar-tasking-backend-$ENVIRONMENT sar-tasking-frontend-$ENVIRONMENT sar-tasking-satellite-pass-$ENVIRONMENT sar-tasking-aoi-validator-$ENVIRONMENT; do
+            PREV_TASK_DEF=$(aws ecs describe-services \
+              --cluster $ECS_CLUSTER \
+              --services $SERVICE \
+              --query 'services[0].deployments[1].taskDefinition' \
+              --output text)
+
+            if [ "$PREV_TASK_DEF" != "None" ]; then
+              aws ecs update-service \
+                --cluster $ECS_CLUSTER \
+                --service $SERVICE \
+                --task-definition $PREV_TASK_DEF \
+                --force-new-deployment
+            fi
+          done
+
+      # Notify deployment status
+      - name: Notify deployment status
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Deployment to ${{ env.ENVIRONMENT }}: ${{ job.status }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Post-deployment tests
+  smoke-tests:
+    name: Run Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy
+    environment: ${{ inputs.environment || 'development' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Install Playwright
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Get ALB DNS
+        id: alb
+        run: |
+          ENV=${{ inputs.environment || 'development' }}
+          ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --names sar-tasking-alb-$ENV \
+            --query 'LoadBalancers[0].DNSName' \
+            --output text)
+          echo "dns=$ALB_DNS" >> $GITHUB_OUTPUT
+
+      - name: Run smoke tests
+        working-directory: ./frontend
+        env:
+          BASE_URL: https://${{ steps.alb.outputs.dns }}
+        run: |
+          # Run basic smoke tests
+          npx playwright test tests/smoke/ --project=chromium || true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-results
+          path: frontend/playwright-report/

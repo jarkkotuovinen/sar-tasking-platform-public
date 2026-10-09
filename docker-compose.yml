@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: sar-tasking-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sar_tasking
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sar-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Satellite Pass Predictor (Go)
+  satellite-pass:
+    build:
+      context: ./services/satellite-pass-predictor
+      dockerfile: Dockerfile
+    container_name: sar-tasking-satellite-pass
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: 8001
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      SERVICE_NAME: satellite-pass-predictor
+      LOG_LEVEL: info
+    networks:
+      - sar-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # AOI Validator (Python)
+  aoi-validator:
+    build:
+      context: ./services/aoi-validator
+      dockerfile: Dockerfile
+    container_name: sar-tasking-aoi-validator
+    ports:
+      - "8002:8002"
+    environment:
+      PORT: 8002
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      SERVICE_NAME: aoi-validator
+      LOG_LEVEL: info
+    networks:
+      - sar-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Backend API (NestJS)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sar-tasking-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sar_tasking?schema=public
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRATION: 7d
+      PORT: 4000
+      NODE_ENV: development
+      SATELLITE_PASS_SERVICE_URL: http://satellite-pass:8001
+      AOI_VALIDATION_SERVICE_URL: http://aoi-validator:8002
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      satellite-pass:
+        condition: service_healthy
+      aoi-validator:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - sar-network
+    command: npm run start:dev
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sar-tasking-frontend
+    environment:
+      VITE_API_URL: http://localhost:4000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - sar-network
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:
+
+networks:
+  sar-network:
+    driver: bridge

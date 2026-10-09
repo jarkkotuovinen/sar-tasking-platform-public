@@ -1,0 +1,201 @@
+// Prisma schema for ICEYE SAR Tasking Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User & Authentication
+model User {
+  id             String        @id @default(uuid())
+  email          String        @unique
+  passwordHash   String
+  name           String
+  role           Role          @default(USER)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  tasks          Task[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([email])
+  @@map("users")
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  users     User[]
+  tasks     Task[]
+  createdAt DateTime @default(now())
+
+  @@map("organizations")
+}
+
+// Satellite Tasking
+model Task {
+  id                String          @id @default(uuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId    String?
+  organization      Organization?   @relation(fields: [organizationId], references: [id])
+  aoiId             String
+  aoi               AreaOfInterest  @relation(fields: [aoiId], references: [id], onDelete: Cascade)
+
+  // SAR Parameters
+  resolution        ResolutionMode
+  polarization      Polarization
+  lookDirection     LookDirection   @default(RIGHT)
+  priority          Priority        @default(MEDIUM)
+
+  // Time Window (optional)
+  requestedStart    DateTime?
+  requestedEnd      DateTime?
+
+  // Status & Lifecycle
+  status            TaskStatus      @default(PENDING)
+  validationErrors  Json?
+  scheduledPassId   String?         @unique
+  scheduledPass     SatellitePass?  @relation(fields: [scheduledPassId], references: [id])
+
+  // Delivery
+  estimatedDelivery DateTime?
+  actualDelivery    DateTime?
+  productId         String?         @unique
+  product           Product?        @relation(fields: [productId], references: [id])
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("tasks")
+}
+
+// Spatial Data - Area of Interest
+model AreaOfInterest {
+  id        String   @id @default(uuid())
+  geometry  Json     // GeoJSON Polygon
+  area      Float    // square kilometers
+  centerLat Float
+  centerLon Float
+  tasks     Task[]
+  createdAt DateTime @default(now())
+
+  @@index([centerLat, centerLon])
+  @@map("areas_of_interest")
+}
+
+// Satellite Fleet
+model Satellite {
+  id           String          @id @default(uuid())
+  name         String          @unique
+  noradId      Int             @unique
+  tle          Json            // Two-Line Element set {line1, line2, epoch}
+  tleUpdatedAt DateTime
+  status       SatelliteStatus @default(ACTIVE)
+  capabilities Json            // {resolutionModes: [], polarizations: []}
+  passes       SatellitePass[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([status])
+  @@map("satellites")
+}
+
+// Predicted Satellite Passes
+model SatellitePass {
+  id           String    @id @default(uuid())
+  satelliteId  String
+  satellite    Satellite @relation(fields: [satelliteId], references: [id], onDelete: Cascade)
+  startTime    DateTime
+  endTime      DateTime
+  maxElevation Float     // degrees
+  direction    String    // "ASCENDING" or "DESCENDING"
+  footprint    Json      // GeoJSON Polygon of coverage area
+  task         Task?
+  createdAt    DateTime  @default(now())
+
+  @@index([satelliteId, startTime])
+  @@index([startTime, endTime])
+  @@map("satellite_passes")
+}
+
+// Delivered Products (SAR Images)
+model Product {
+  id           String        @id @default(uuid())
+  task         Task?
+  s3Bucket     String
+  s3Key        String
+  fileSize     BigInt
+  format       String        // "GeoTIFF", "HDF5", etc.
+  metadata     Json          // Image metadata, processing parameters
+  thumbnailUrl String?
+  status       ProductStatus @default(PROCESSING)
+  createdAt    DateTime      @default(now())
+  deliveredAt  DateTime?
+
+  @@index([status])
+  @@map("products")
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+  OPERATOR
+}
+
+enum TaskStatus {
+  PENDING
+  VALIDATING
+  SCHEDULED
+  ACQUIRING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ResolutionMode {
+  SPOTLIGHT
+  STRIPMAP
+  SCANSAR
+}
+
+enum Polarization {
+  HH
+  VV
+  HV
+  VH
+}
+
+enum LookDirection {
+  LEFT
+  RIGHT
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SatelliteStatus {
+  ACTIVE
+  MAINTENANCE
+  DECOMMISSIONED
+}
+
+enum ProductStatus {
+  PROCESSING
+  READY
+  DELIVERED
+  FAILED
+}

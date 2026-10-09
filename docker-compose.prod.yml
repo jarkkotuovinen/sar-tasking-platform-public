@@ -1,0 +1,145 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: sar-tasking-postgres-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-sar_tasking}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sar-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Satellite Pass Predictor (Go)
+  satellite-pass:
+    build:
+      context: ./services/satellite-pass-predictor
+      dockerfile: Dockerfile
+      target: production
+    container_name: sar-tasking-satellite-pass-prod
+    environment:
+      PORT: 8001
+      JWT_SECRET: ${JWT_SECRET}
+      SERVICE_NAME: satellite-pass-predictor
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    networks:
+      - sar-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # AOI Validator (Python)
+  aoi-validator:
+    build:
+      context: ./services/aoi-validator
+      dockerfile: Dockerfile
+      target: production
+    container_name: sar-tasking-aoi-validator-prod
+    environment:
+      PORT: 8002
+      JWT_SECRET: ${JWT_SECRET}
+      SERVICE_NAME: aoi-validator
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    networks:
+      - sar-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Backend API (NestJS)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: sar-tasking-backend-prod
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7d}
+      PORT: 4000
+      NODE_ENV: production
+      SATELLITE_PASS_SERVICE_URL: http://satellite-pass:8001
+      AOI_VALIDATION_SERVICE_URL: http://aoi-validator:8002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      satellite-pass:
+        condition: service_healthy
+      aoi-validator:
+        condition: service_healthy
+    networks:
+      - sar-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Frontend (React + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: sar-tasking-frontend-prod
+    depends_on:
+      - backend
+    networks:
+      - sar-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Reverse Proxy (Nginx)
+  nginx:
+    image: nginx:alpine
+    container_name: sar-tasking-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - sar-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  sar-network:
+    driver: bridge

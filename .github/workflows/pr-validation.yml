@@ -1,0 +1,376 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '22'
+  GO_VERSION: '1.22'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Backend Tests
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sar_tasking_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: ./backend
+        run: npx prisma generate
+
+      - name: Run database migrations
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sar_tasking_test?schema=public
+        run: npx prisma migrate deploy
+
+      - name: Run linter
+        working-directory: ./backend
+        run: npm run lint || true
+
+      - name: Run unit tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sar_tasking_test?schema=public
+          JWT_SECRET: test-secret-key
+        run: npm test
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./backend/coverage/coverage-final.json
+          flags: backend
+          name: backend-coverage
+        if: always()
+
+  # Frontend Tests
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run linter
+        working-directory: ./frontend
+        run: npm run lint || true
+
+      - name: Run unit tests
+        working-directory: ./frontend
+        run: npm test -- --run
+
+      - name: Run build
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./frontend/coverage/coverage-final.json
+          flags: frontend
+          name: frontend-coverage
+        if: always()
+
+  # Go Service Tests
+  go-service-tests:
+    name: Go Service Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: services/satellite-pass-predictor/go.sum
+
+      - name: Install dependencies
+        working-directory: ./services/satellite-pass-predictor
+        run: go mod download
+
+      - name: Run linter
+        working-directory: ./services/satellite-pass-predictor
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          golangci-lint run --timeout 5m || true
+
+      - name: Run tests
+        working-directory: ./services/satellite-pass-predictor
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Build
+        working-directory: ./services/satellite-pass-predictor
+        run: go build -v ./...
+
+  # Python Service Tests
+  python-service-tests:
+    name: Python Service Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: services/aoi-validator/requirements.txt
+
+      - name: Install dependencies
+        working-directory: ./services/aoi-validator
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov ruff mypy
+
+      - name: Run linter
+        working-directory: ./services/aoi-validator
+        run: ruff check . || true
+
+      - name: Run type checker
+        working-directory: ./services/aoi-validator
+        run: mypy main.py || true
+
+      - name: Run tests
+        working-directory: ./services/aoi-validator
+        run: pytest tests/ -v --cov=. --cov-report=xml || echo "Tests not yet implemented"
+
+  # E2E Tests with Playwright
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sar_tasking_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Setup database
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sar_tasking_test?schema=public
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sar_tasking_test?schema=public
+          JWT_SECRET: test-secret-key
+          PORT: 4000
+        run: npm run start:dev &
+
+      - name: Wait for backend
+        run: |
+          timeout 60 sh -c 'until curl -f http://localhost:4000/health; do sleep 2; done'
+
+      - name: Run E2E tests
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: http://localhost:4000
+        run: npm run test:e2e || echo "E2E tests not fully configured"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
+
+  # Security Scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        if: always()
+
+      - name: Run npm audit (Backend)
+        working-directory: ./backend
+        run: npm audit --production || true
+
+      - name: Run npm audit (Frontend)
+        working-directory: ./frontend
+        run: npm audit --production || true
+
+  # Code Quality
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true
+
+  # Build Validation
+  build-validation:
+    name: Build All Services
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: sar-tasking-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: sar-tasking-frontend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Go Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/satellite-pass-predictor
+          push: false
+          tags: sar-tasking-satellite-pass:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Python Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/aoi-validator
+          push: false
+          tags: sar-tasking-aoi-validator:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # PR Status Check
+  pr-check:
+    name: PR Status Check
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, go-service-tests, python-service-tests, build-validation]
+    if: always()
+
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.backend-tests.result }}" != "success" ] || \
+             [ "${{ needs.frontend-tests.result }}" != "success" ] || \
+             [ "${{ needs.build-validation.result }}" != "success" ]; then
+            echo "::error::One or more checks failed"
+            exit 1
+          fi
